@@ -53,6 +53,29 @@ public class DBManager {
 		return t;
 	}
 	
+	/**
+	 * execute update
+	 * 
+	 * @param sql
+	 * @return int -1:exception, others are normal
+	 */
+	public int executeUpdate(String sql) {
+		Connection conn = null;
+		Statement stmt = null;
+		ResultSet rs = null;
+		int ret = -1;
+		try {
+			conn = getConnection();
+			stmt = conn.createStatement();
+			ret = stmt.executeUpdate(sql);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			close(conn, stmt, rs);
+		}
+		return ret;
+	}
+	
 	public void close(Connection conn, Statement stmt, ResultSet rs) {
 		if(rs != null) {
 			try {
