@@ -2,7 +2,9 @@ package com.hgst.checkalertgroup;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 public class DBManager {
 
@@ -30,5 +32,48 @@ public class DBManager {
 			conn = DriverManager.getConnection(url, user, password);
 		}
 		return conn;
+	}
+	
+	public <T> T executeQuery(String sql, QueryProcesser<T> queryProcesser) {
+		Connection conn = null;
+		Statement stmt = null;
+		ResultSet rs = null;
+		T t = null;
+		try {
+			conn = getConnection();
+			stmt = conn.createStatement();
+			rs = stmt.executeQuery(sql);
+			t = queryProcesser.process(stmt, rs);
+			return t;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			close(conn, stmt, rs);
+		}
+		return t;
+	}
+	
+	public void close(Connection conn, Statement stmt, ResultSet rs) {
+		if(rs != null) {
+			try {
+				rs.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		if(stmt != null) {
+			try {
+				stmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		if(conn != null) {
+			try {
+				conn.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 }

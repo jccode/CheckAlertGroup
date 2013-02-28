@@ -30,13 +30,15 @@ public class CheckAlertGroup implements Runnable {
 		System.out.println("doCheck!");
 		System.out.println("------------ >>>>>>");
 		test();
-		List<String> groupNames = getAllGroupNames();
+//		List<String> groupNames = getAllGroupNames();
+		getAllFoods();
 	}
 	
+	// 手动建立连接
 	List<String> getAllGroupNames() {
 		List<String> groupNames = new ArrayList<String>();
 		
-		String sql = "select count(*) from 1000funs.shop";
+		String sql = "select count(*) from 1000funs.food";
 		Connection conn = null;
 		Statement stmt = null;
 		ResultSet rs = null;
@@ -48,33 +50,40 @@ public class CheckAlertGroup implements Runnable {
 			while(rs.next()) {
 				ret = rs.getInt(1);
 			}
-			System.out.println("1000funs.shop的记录总数为: " + ret);
+			System.out.println("1000funs.food的记录总数为: " + ret);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
-			if(rs != null) {
-				try {
-					rs.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
-			if(stmt != null) {
-				try {
-					stmt.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
-			if(conn != null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
+			dbm.close(conn, stmt, rs);
 		}
 		return groupNames;
+	}
+	
+	// 使用模板
+	List<String> getAllFoods() {
+		String sql = "select * from 1000funs.food";
+		List<String> foodNames = dbm.executeQuery(sql, new QueryProcesser<List<String>>() {
+
+			@Override
+			public List<String> process(Statement stmt, ResultSet rs) throws SQLException {
+				List<String> foodNames = new ArrayList<String>();
+				while(rs.next()) {
+					foodNames.add(rs.getString("food_name"));
+				}
+				
+				//这里可以使用stmt对象再做进一步的查询处理
+				String sql2 = "select * FROM 1000funs.package_group";
+				rs = stmt.executeQuery(sql2);
+				while(rs.next()) {
+					foodNames.add(rs.getString("group_name"));
+				}
+				
+				return foodNames;
+			}
+			
+		});
+		System.out.println(foodNames);
+		return foodNames;
 	}
 	
 	void test() {
