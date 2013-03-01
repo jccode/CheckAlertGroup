@@ -1,4 +1,4 @@
-package com.hgst.checkalertgroup;
+package com.hgst.checkalertgroup.db;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

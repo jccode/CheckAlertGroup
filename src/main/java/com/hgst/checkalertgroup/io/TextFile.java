@@ -1,4 +1,4 @@
-package com.hgst.checkalertgroup;
+package com.hgst.checkalertgroup.io;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -28,17 +28,21 @@ public class TextFile {
 	public static File forceNewFile(String name) throws IOException {
 		File file = new File(name);
 		if(!file.exists()) {
-			file.getParentFile().mkdirs();
+			File parentFile = file.getParentFile();
+			if(parentFile != null) {
+				parentFile.mkdirs();
+			}
 			file.createNewFile();
 		}
 		return file;
 	}
 	
 	public static void main(String[] args) {
-		String name = "/home/jcchen/temp/a/b/c.txt";
+		String name = "../c.txt";
 		try {
 			File file = forceNewFile(name);
-			write(file, "我要写个文件工具类-----11");
+			write(file, "我要写个文件工具类-----");
+			System.out.println("over..");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

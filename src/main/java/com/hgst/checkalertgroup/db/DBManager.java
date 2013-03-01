@@ -1,4 +1,4 @@
-package com.hgst.checkalertgroup;
+package com.hgst.checkalertgroup.db;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -6,13 +6,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+
 public class DBManager {
 
 	private String url;
 	private String driver;
 	private String user;
 	private String password;
-	private Connection conn;
 	
 	
 	public DBManager(String url, String driver, String user, String password) throws ClassNotFoundException {
@@ -28,10 +28,7 @@ public class DBManager {
 	}
 	
 	public Connection getConnection() throws SQLException {
-		if(conn == null) {
-			conn = DriverManager.getConnection(url, user, password);
-		}
-		return conn;
+		return DriverManager.getConnection(url, user, password);
 	}
 	
 	public <T> T executeQuery(String sql, QueryProcesser<T> queryProcesser) {
