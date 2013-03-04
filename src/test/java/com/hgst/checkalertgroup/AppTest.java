@@ -22,7 +22,10 @@ public class AppTest extends TestCase {
 	 * @return the suite of tests being tested
 	 */
 	public static Test suite() {
-		return new TestSuite(AppTest.class);
+		TestSuite suit = new TestSuite("Run all test");
+		suit.addTestSuite(AppTest.class);
+		suit.addTestSuite(CheckAlertGroupTest.class);
+		return suit;
 	}
 
 	/**

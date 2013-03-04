@@ -5,11 +5,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import com.hgst.checkalertgroup.db.DBManager;
 import com.hgst.checkalertgroup.db.QueryProcesser;
 import com.hgst.checkalertgroup.io.CheckResultWriter;
+import com.hgst.checkalertgroup.model.CheckResult;
+import com.hgst.checkalertgroup.model.ResultType;
+import com.hgst.checkalertgroup.util.Combinatory;
 
 
 public class CheckAlertGroup implements Runnable {
@@ -28,6 +32,10 @@ public class CheckAlertGroup implements Runnable {
 	private List<String> areaSameResult = new ArrayList<String>() ;
 	private List<String> areaDiffResult = new ArrayList<String>();
 	
+	private List<CheckResult> checkResults = new ArrayList<CheckResult>();
+	
+	public CheckAlertGroup(){}
+	
 	public CheckAlertGroup(Env env, CheckResultWriter writer) throws ClassNotFoundException {
 		this.env = env;
 		this.writer = writer;
@@ -44,11 +52,18 @@ public class CheckAlertGroup implements Runnable {
 		groupNames = getAllGroupNames();
 		
 		System.out.println("processing...");
+		Date start = new Date();
 		
+		// only check area parameter.
+		//checkArea(groupNames);
+		//writer.write(withoutAreaRule, areaSameResult, areaDiffResult);
+		
+		// check all of the invalid parameter
 		check(groupNames);
-		writer.write(withoutAreaRule, areaSameResult, areaDiffResult);
+		writer.write(checkResults);
 		
-		System.out.println("finish.");
+		double cost = (new Date().getTime() - start.getTime()) / (1000 * 60) ;
+		System.out.println("finish. cost time: " + cost + " min.");
 	}
 	
 	List<String> getAllGroupNames() {
@@ -70,7 +85,129 @@ public class CheckAlertGroup implements Runnable {
 		return groupNames;
 	}
 	
+	/**
+	 * check all of the the parameter
+	 * @param groupNames
+	 */
 	void check(List<String> groupNames) {
+		Connection conn = null; 
+		Statement stmt = null;
+		ResultSet rs = null;
+		try {
+			conn = dbm.getConnection();
+			stmt = conn.createStatement();
+			int i = 1;
+			for(String groupName : groupNames) {
+				
+				if(i++ % 40 == 0)
+					System.out.println(".");
+				else 
+					System.out.print(".");
+				
+				// get parameter values
+				String sql = getParameterValueSQL(groupName);
+				List<String> paramValues = new ArrayList<String>();
+				rs = stmt.executeQuery(sql);
+				while(rs.next()) {
+					paramValues.add(rs.getString("PARAMETERVALUE"));
+				}
+				
+				int pSize = paramValues.size();
+				if(pSize <= 1) {
+					continue;
+				}
+				
+				// check
+				String checkSQL = getCheckSQL(paramValues);
+				rs = stmt.executeQuery(checkSQL);
+				while(rs.next()) {
+					int count = rs.getInt("C");
+					int parameterCount = rs.getInt("PARAMETERCOUNT");
+					String parameterValue = rs.getString("PARAMETERVALUE");
+					
+					if(count == 0) {
+						checkResults.add(new CheckResult(groupName, ResultType.RESULT_ZERO, "query result is empty."));
+					} else if(parameterCount != pSize) {
+						extractInvalidParamters(paramValues, parameterValue);
+						checkResults.add(new CheckResult(groupName, ResultType.INVALID_PARAMTER, "invalid parameters", paramValues));
+					}
+					break;
+				}
+			}
+			
+			System.out.println();
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			dbm.close(conn, stmt, rs);
+		}
+	}
+	
+	public String getCheckSQL(List<String> paramValues) {
+		List<String> sqls = new ArrayList<String>();
+		Combinatory<String> comb = new Combinatory<String>(paramValues.toArray(new String[paramValues.size()]), String.class);
+		for(int i = 1, len = paramValues.size(); i <= len; i++) {
+			List<String[]> conditionList = comb.combine(i);
+			for(String[] conditions : conditionList) {
+				sqls.add(generateOneSQL(conditions));
+			}
+		}
+		
+		StringBuilder sbResult = new StringBuilder();
+		sbResult.append("SELECT C, PARAMETERVALUE, PARAMETERCOUNT FROM (");
+		sbResult.append(join(sqls.toArray(new String[sqls.size()]), " UNION "));
+		sbResult.append(") T ");
+		sbResult.append("ORDER BY T.C ASC, T.PARAMETERCOUNT ASC");
+		
+		return sbResult.toString();
+	}
+	
+	public String generateOneSQL(String[] conditions) {
+		StringBuilder sbSQL = new StringBuilder();
+		sbSQL.append("SELECT COUNT(0) C, '")
+			.append(join(conditions, ","))
+			.append("' PARAMETERVALUE, ")
+			.append(conditions.length)
+			.append(" PARAMETERCOUNT ");
+		sbSQL.append("FROM EVENTS.HMNY_ACT WHERE ");
+		sbSQL.append(join(wrapWhere(conditions), " AND "));
+		return sbSQL.toString();
+	}
+	
+	public String join(String[] arrays, String conjunction) {
+		StringBuilder sb = new StringBuilder();
+		boolean first = true;
+		for(String item : arrays) {
+			if(first) first = false;
+			else sb.append(conjunction);
+			sb.append(item);
+		}
+		return sb.toString();
+	}
+	
+	private String[] wrapWhere(String[] conditions) {
+		String[] wrap = new String[conditions.length];
+		for(int i = 0; i < conditions.length; i++) {
+			wrap[i] = "EVENTGROUPS LIKE '%" + conditions[i] + "%'";
+		}
+		return wrap;
+	}
+	
+	private void extractInvalidParamters(List<String> params, String validParameters) {
+		String[] invalids = validParameters.split(",");
+		for(String invalid : invalids) {
+			params.remove(invalid);
+		}
+	}
+	
+	
+	/**
+	 * Only Check Area Parameter.
+	 * 
+	 * @param groupNames
+	 */
+	void checkArea(List<String> groupNames) {
 		Connection conn = null; 
 		Statement stmt = null;
 		ResultSet rs = null;
@@ -94,7 +231,7 @@ public class CheckAlertGroup implements Runnable {
 				}
 				
 				// check if has the same result
-				String checkSQL = getCheckSQL(paramValues);
+				String checkSQL = getCheckAreaSQL(paramValues);
 				rs = stmt.executeQuery(checkSQL);
 				while(rs.next()) {
 					if(rs.getInt(1) == 1) { // same result whether the areaRule exist or not
@@ -111,7 +248,7 @@ public class CheckAlertGroup implements Runnable {
 		}
 	}
 	
-	private String getCheckSQL(List<String> rules) {
+	private String getCheckAreaSQL(List<String> rules) {
 		String sqlMain = "SELECT COUNT(0) FROM ", 
 				sqlFrom = "SELECT COUNT(0) AS PART FROM EVENTS.HMNY_ACT WHERE ";
 		String allWhere = "", partWhere = "";

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.List;
 
 import com.hgst.checkalertgroup.Env;
+import com.hgst.checkalertgroup.model.CheckResult;
 
 public class CheckResultWriter {
 
@@ -34,6 +35,15 @@ public class CheckResultWriter {
 		}
 	}
 	
+	public void write(List<CheckResult> results) {
+		try {
+			TextFile.write(output, listToString(results));
+		} catch (IOException e) {
+			System.out.println("输出最终结果失败. 异常:");
+			e.printStackTrace();
+		}
+	}
+	
 	private String wrapper(List<String> list) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("共 " + list.size() + " 条\n");
@@ -42,10 +52,10 @@ public class CheckResultWriter {
 		return sb.toString();
 	}
 	
-	private String listToString(List<String> list) {
+	private String listToString(List list) {
 		StringBuilder sb = new StringBuilder();
-		for(String s : list) {
-			sb.append(s).append("\n");
+		for(Object o : list) {
+			sb.append(o.toString()).append("\n");
 		}
 		return sb.toString();
 	}
