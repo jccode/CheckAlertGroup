@@ -65,9 +65,9 @@ public class CheckAlertGroup implements Runnable {
 		writer.write(checkResults);
 		
 		Date end = new Date();
-		double cost = (end.getTime() - start.getTime()) / (1000 * 60) ;
+		double cost = (end.getTime() - start.getTime()) / 1000; //second
 		System.out.println("finish. ");
-		System.out.println("finish time: " + end + ". elapsed time: " + cost + " min.");
+		System.out.println("finish time: " + end + ". elapsed time: " + cost/60 + " min " + cost%60 + " second.");
 	}
 	
 	List<String> getAllGroupNames() {

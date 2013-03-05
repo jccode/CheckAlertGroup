@@ -16,7 +16,7 @@ public class CheckAlertGroupTest extends TestCase {
 				"ibm/spcHMNY/productcode/MARS-K+_R"
 			};
 		String sql = checkAlertGroup.generateOneSQL(conditions);
-//		System.out.println(sql);
+		System.out.println(sql);
 		assertTrue(true);
 	}
 	
