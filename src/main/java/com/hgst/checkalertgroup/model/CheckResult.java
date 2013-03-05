@@ -59,10 +59,6 @@ public class CheckResult {
 
 	@Override
 	public String toString() {
-		if(this.type == ResultType.RESULT_ZERO) {
-			return groupName + " : query result is empty.";
-		} else {
-			return groupName + " : there are invalid parameters: " + invalidParameters;
-		}
+		return this.groupName + "\t" + this.type + "\t" + this.invalidParameters + "\t" + this.message;
 	}
 }

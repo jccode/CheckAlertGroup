@@ -49,10 +49,12 @@ public class CheckAlertGroup implements Runnable {
 	@Override
 	public void run() {
 		connectionInfo();
-		groupNames = getAllGroupNames();
 		
-		System.out.println("processing...");
 		Date start = new Date();
+		System.out.println("begin time: " + start);
+		System.out.println("processing");
+		
+		groupNames = getAllGroupNames();
 		
 		// only check area parameter.
 		//checkArea(groupNames);
@@ -62,8 +64,10 @@ public class CheckAlertGroup implements Runnable {
 		check(groupNames);
 		writer.write(checkResults);
 		
-		double cost = (new Date().getTime() - start.getTime()) / (1000 * 60) ;
-		System.out.println("finish. cost time: " + cost + " min.");
+		Date end = new Date();
+		double cost = (end.getTime() - start.getTime()) / (1000 * 60) ;
+		System.out.println("finish. ");
+		System.out.println("finish time: " + end + ". elapsed time: " + cost + " min.");
 	}
 	
 	List<String> getAllGroupNames() {
@@ -126,7 +130,7 @@ public class CheckAlertGroup implements Runnable {
 					String parameterValue = rs.getString("PARAMETERVALUE");
 					
 					if(count == 0) {
-						checkResults.add(new CheckResult(groupName, ResultType.RESULT_ZERO, "query result is empty."));
+						checkResults.add(new CheckResult(groupName, ResultType.RESULT_EMPTY, "query result is empty."));
 					} else if(parameterCount != pSize) {
 						extractInvalidParamters(paramValues, parameterValue);
 						checkResults.add(new CheckResult(groupName, ResultType.INVALID_PARAMTER, "invalid parameters", paramValues));
