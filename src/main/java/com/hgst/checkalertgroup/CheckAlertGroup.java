@@ -13,6 +13,7 @@ import com.hgst.checkalertgroup.db.QueryProcesser;
 import com.hgst.checkalertgroup.io.CheckResultWriter;
 import com.hgst.checkalertgroup.model.CheckResult;
 import com.hgst.checkalertgroup.model.ResultType;
+import com.hgst.checkalertgroup.util.CLIBar;
 import com.hgst.checkalertgroup.util.Combinatory;
 
 
@@ -65,7 +66,7 @@ public class CheckAlertGroup implements Runnable {
 		writer.write(checkResults);
 		
 		Date end = new Date();
-		double cost = (end.getTime() - start.getTime()) / 1000; //second
+		long cost = (end.getTime() - start.getTime()) / 1000; //second
 		System.out.println("finish. ");
 		System.out.println("finish time: " + end + ". elapsed time: " + cost/60 + " min " + cost%60 + " second.");
 	}
@@ -100,13 +101,17 @@ public class CheckAlertGroup implements Runnable {
 		try {
 			conn = dbm.getConnection();
 			stmt = conn.createStatement();
-			int i = 1;
+			int i = 1, len = groupNames.size();
 			for(String groupName : groupNames) {
 				
+				/*
 				if(i++ % 40 == 0)
 					System.out.println(".");
 				else 
 					System.out.print(".");
+				*/
+				CLIBar.bar((double)i++/len);
+				
 				
 				// get parameter values
 				String sql = getParameterValueSQL(groupName);

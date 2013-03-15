@@ -2,10 +2,10 @@ package com.hgst.checkalertgroup.db;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
 
 public class DBManager {
 
@@ -69,6 +69,30 @@ public class DBManager {
 			e.printStackTrace();
 		} finally {
 			close(conn, stmt, rs);
+		}
+		return ret;
+	}
+	
+	/**
+	 * execute update
+	 * 
+	 * @param sql
+	 * @return int -1:exception, others are normal
+	 */
+	public int executeUpdate(String sql, PstmtProcesser pstmtProcesser) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		int ret = -1;
+		try {
+			conn = getConnection();
+			pstmt = conn.prepareStatement(sql);
+			pstmtProcesser.setParamters(pstmt);
+			ret = pstmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			close(conn, pstmt, rs);
 		}
 		return ret;
 	}
