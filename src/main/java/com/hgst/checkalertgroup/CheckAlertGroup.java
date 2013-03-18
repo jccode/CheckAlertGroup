@@ -101,17 +101,14 @@ public class CheckAlertGroup implements Runnable {
 		try {
 			conn = dbm.getConnection();
 			stmt = conn.createStatement();
+			
+			CLIBar bar = new CLIBar();
+			bar.start();
+			
 			int i = 1, len = groupNames.size();
 			for(String groupName : groupNames) {
 				
-				/*
-				if(i++ % 40 == 0)
-					System.out.println(".");
-				else 
-					System.out.print(".");
-				*/
-				CLIBar.bar((double)i++/len);
-				
+				bar.setRate((double)i++/len);
 				
 				// get parameter values
 				String sql = getParameterValueSQL(groupName);
