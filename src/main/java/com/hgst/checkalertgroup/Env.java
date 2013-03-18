@@ -10,6 +10,8 @@ public class Env {
 	public static final String KEY_DB_DRIVER = "db.driver";
 	public static final String KEY_FILE_OUTPUT = "file.output";
 	public static final String KEY_FILE_FORMAT = "file.format";
+	public static final String KEY_TB_ACT = "tb.act";
+	public static final String KEY_TB_RULEPARAMTABLE = "tb.ruleparamtable";
 	
 	private static Env env = new Env();
 	private static Properties p;

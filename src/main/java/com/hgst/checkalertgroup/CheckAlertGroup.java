@@ -25,6 +25,9 @@ public class CheckAlertGroup implements Runnable {
 	private String password;
 	private DBManager dbm;
 	
+	private String actTable;
+	private String ruleParamTable;
+	
 	private Env env;
 	private CheckResultWriter writer;
 	
@@ -44,6 +47,8 @@ public class CheckAlertGroup implements Runnable {
 		this.driver = this.env.get(Env.KEY_DB_DRIVER);
 		this.user = this.env.get(Env.KEY_DB_USER);
 		this.password = this.env.get(Env.KEY_DB_PASSWORD);
+		this.actTable = this.env.get(Env.KEY_TB_ACT);
+		this.ruleParamTable = this.env.get(Env.KEY_TB_RULEPARAMTABLE);
 		dbm = new DBManager(url, driver, user, password);
 	}
 
@@ -53,7 +58,7 @@ public class CheckAlertGroup implements Runnable {
 		
 		Date start = new Date();
 		System.out.println("begin time: " + start);
-		System.out.println("processing");
+		System.out.println("processing...");
 		
 		groupNames = getAllGroupNames();
 		
@@ -68,13 +73,13 @@ public class CheckAlertGroup implements Runnable {
 		Date end = new Date();
 		long cost = (end.getTime() - start.getTime()) / 1000; //second
 		System.out.println("finish. ");
-		System.out.println("finish time: " + end + ". elapsed time: " + cost/60 + " min " + cost%60 + " second.");
+		System.out.println("finish time: " + end + ". \ncost: " + cost/60 + " min " + cost%60 + " second.");
 	}
 	
 	List<String> getAllGroupNames() {
 		String sql = "SELECT DISTINCT GROUP" + 
 					"  FROM (SELECT OBJECTNAME, PARAMETERVALUE, LEFT(OBJECTNAME, LENGTH(OBJECTNAME) - 9) AS GROUP" +
-					"          FROM RULEDB.RULEPARAMTABLE" +
+					"          FROM " + ruleParamTable +
 					"          WHERE OBJECTNAME LIKE '%SeqInputGroupsOOC%' AND PARAMETERNAME = 'Name'" +
 					"          ORDER BY OBJECTNAME) AS T";
 		List<String> groupNames = dbm.executeQuery(sql, new QueryProcesser<List<String>>() {
@@ -176,7 +181,7 @@ public class CheckAlertGroup implements Runnable {
 			.append("' PARAMETERVALUE, ")
 			.append(conditions.length)
 			.append(" PARAMETERCOUNT ");
-		sbSQL.append("FROM EVENTS.HMNY_ACT WHERE ");
+		sbSQL.append("FROM " + actTable + " WHERE ");
 		sbSQL.append(join(wrapWhere(conditions), " AND "));
 		return sbSQL.toString();
 	}
@@ -256,7 +261,7 @@ public class CheckAlertGroup implements Runnable {
 	
 	private String getCheckAreaSQL(List<String> rules) {
 		String sqlMain = "SELECT COUNT(0) FROM ", 
-				sqlFrom = "SELECT COUNT(0) AS PART FROM EVENTS.HMNY_ACT WHERE ";
+				sqlFrom = "SELECT COUNT(0) AS PART FROM " + actTable + " WHERE ";
 		String allWhere = "", partWhere = "";
 		for(String rule : rules) {
 			allWhere += " AND EVENTGROUPS LIKE '%" + rule + "%'";
@@ -276,7 +281,7 @@ public class CheckAlertGroup implements Runnable {
 
 	private String getParameterValueSQL(String groupName) {
 		String sql = "SELECT PARAMETERVALUE" +
-					"  FROM RULEDB.RULEPARAMTABLE" +
+					"  FROM " + ruleParamTable +
 					"  WHERE PARAMETERNAME = 'Name'" +
 					"    AND OBJECTNAME LIKE '"+groupName+"%'";
 		return sql;
