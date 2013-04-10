@@ -113,7 +113,7 @@ public class CheckAlertGroup implements Runnable {
 			int i = 1, len = groupNames.size();
 			for(String groupName : groupNames) {
 				
-				bar.setRate((double)i++/len);
+				bar.setValue((double)i++/len);
 				
 				// get parameter values
 				String sql = getParameterValueSQL(groupName);

@@ -23,7 +23,7 @@ public class CLIBar extends Thread {
 
 	private int sleepTime = 200;
 	private int count = 0;
-	private double rate = 0.0;
+	private double value = 0.0;
 
 	public CLIBar() {}
 	
@@ -61,8 +61,8 @@ public class CLIBar extends Thread {
 	public void run() {
 		try {
 			while (true) {
-				bar(rate);
-				if ((int) rate == 1) {
+				bar(value);
+				if ((int) value == 1) {
 					break;
 				}
 				Thread.sleep(sleepTime);
@@ -72,12 +72,12 @@ public class CLIBar extends Thread {
 		}
 	}
 
-	public double getRate() {
-		return rate;
+	public double getValue() {
+		return value;
 	}
 
-	public void setRate(double rate) {
-		this.rate = rate;
+	public void setValue(double value) {
+		this.value = value;
 	}
 	
 }
